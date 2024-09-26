@@ -155,6 +155,16 @@ module.exports = (io) => {
     });
     
 
+    //audio chat
+    socket.on('ready-to-connect', ({ roomId }) => {
+      console.log(`User ${socket.id} is ready to connect in room ${roomId}`);
+      socket.to(roomId).emit('user-joined', { peerId: socket.id });
+    });
+
+    socket.on('send-signal', ({ signal, peerId, roomId }) => {
+      console.log(`Sending signal from ${socket.id} to ${peerId} in room ${roomId}`);
+      io.to(peerId).emit('receive-signal', { signal, peerId: socket.id });
+    });
     socket.on("disconnecting", async () => {
       const roomId = socket.currentRoom;
       const userId = socket.userId;
@@ -171,6 +181,7 @@ module.exports = (io) => {
             if (user) {
               // Notify other users about the user leaving
               socket.to(roomId).emit('userLeft', { userId: user._id, name: user.name });
+              socket.to(roomId).emit('user-disconnected', socket.id);
             }
 
             // Update room state
